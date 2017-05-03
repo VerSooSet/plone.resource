@@ -170,6 +170,25 @@ class PersistentResourceDirectory(object):
         obj = container._getOb(filename)
         notify(event(obj))
 
+    def importZipAsCopy(self, f, time):
+	if not isinstance(f, zipfile.ZipFile):
+            f = zipfile.ZipFile(f)
+        for name in f.namelist():
+	    member = f.getinfo(name)
+	    path = time + '-' + member.filename.lstrip('/')
+	     
+	    # test each part of the path against the filters
+            if any(any(filter.match(n) for filter in FILTERS)
+                   for n in path.split('/')
+                   ):
+                continue
+
+            if path.endswith('/'):
+		self.makeDirectory(path)
+	    else:
+                data = f.open(member).read()
+                self.writeFile(path, data)
+
     def importZip(self, f):
         if not isinstance(f, zipfile.ZipFile):
             f = zipfile.ZipFile(f)
